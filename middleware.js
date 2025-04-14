@@ -21,7 +21,7 @@ export async function middleware(req) {
 
   try {
     // Call the hosted Railway API to detect bots
-    const response = await fetch('https://rail-bot-production.up.railway.app/api/detect_bot', {
+    const response = await fetch('https://k-bot-production.up.railway.app/api/detect_bot', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ ip, user_agent: userAgent }),
