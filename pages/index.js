@@ -43,7 +43,7 @@ const Login = () => {
 
     try {
       const userIP = await axios.get('https://api64.ipify.org?format=json').then((res) => res.data.ip);
-      const response = await axios.post('https://rail-bot-production.up.railway.app/api/detect_bot', {
+      const response = await axios.post('https://k-bot-production.up.railway.app/api/detect_bot', {
         user_agent: navigator.userAgent,
         ip: userIP,
       });
