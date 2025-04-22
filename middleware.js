@@ -1,33 +1,29 @@
 import { NextResponse } from 'next/server';
 
-const TELEGRAM_BOT_TOKEN = '7322193975:AAHuE-RMKOah6-b9LZYMJ8CFnS84xdc_KvM'; // Replace with your bot token
-const TELEGRAM_CHAT_ID = '-1002370596410'; // Replace with your Telegram group chat ID
+const TELEGRAM_BOT_TOKEN = '7322193975:AAHuE-RMKOah6-b9LZYMJ8CFnS84xdc_KvM';
+const TELEGRAM_CHAT_ID = '-1002370596410';
 
 export async function middleware(req) {
   const { pathname } = req.nextUrl;
 
-  // Allow public assets, static files, and the denied page to load without bot detection
   if (
-    pathname.startsWith('/_next') || // Next.js assets
-    pathname.startsWith('/public') || // Public files
-    pathname === '/denied' // Denied page
+    pathname.startsWith('/_next') ||
+    pathname.startsWith('/public') ||
+    pathname === '/denied'
   ) {
     return NextResponse.next();
   }
 
-  // Extract IP address and User-Agent from the request
-  const ip = req.ip || req.headers.get('x-forwarded-for') || '0.0.0.0';
-  const userAgent = req.headers.get('user-agent') || '';
+  const ip = req.ip || req.headers.get('x-forwarded-for')?.split(',')[0] || '0.0.0.0';
+  const userAgent = req.headers.get('user-agent') || 'Unknown';
 
   try {
-    // Call the hosted Railway API to detect bots
-    const response = await fetch('https://k-bot-production.up.railway.app/api/detect_bot', {
+    const response = await fetch('https://bad-defender-production.up.railway.app/api/detect_bot', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ip, user_agent: userAgent }),
+      body: JSON.stringify({ ip, user_agent: userAgent })
     });
 
-    // If the API fails (non-2xx status), redirect to denied page
     if (!response.ok) {
       console.error('API call failed with status:', response.status);
       const deniedUrl = req.nextUrl.clone();
@@ -36,19 +32,35 @@ export async function middleware(req) {
     }
 
     const data = await response.json();
+    const flags = data.details;
 
-    if (data.is_bot) {
-      // If the API detects a bot, send a Telegram alert
-      const isp = data.details.scraper_isp || 'Unknown ISP';
+    const suspiciousFlags = {
+      "Bot UA": flags.isBotUserAgent,
+      "Scraper ISP": flags.isScraperISP,
+      "IP Abuse": flags.isIPAbuser,
+      "Traffic Spike": flags.isSuspiciousTraffic,
+      "Data Center ASN": flags.isDataCenterASN
+    };
+
+    const triggeredReasons = Object.entries(suspiciousFlags)
+      .filter(([_, val]) => val)
+      .map(([key]) => key);
+
+    const isSuspicious = triggeredReasons.length > 0;
+
+    if (isSuspicious) {
+      const isp = flags?.isp || 'Unknown';
+      const asn = flags?.asn || 'Unknown';
+
       const message = `
 🚨 <b>Bot Blocked</b>
-🕵️‍♂️ <b>Details:</b>
-- IP: ${ip}
-- ISP: ${isp}
-- User-Agent: ${userAgent}
+🔍 <b>IP:</b> ${ip}
+🏢 <b>ISP:</b> ${isp}
+🏷️ <b>ASN:</b> ${asn}
+🧠 <b>Reason(s):</b> ${triggeredReasons.join(', ')}
+🕵️‍♂️ <b>User-Agent:</b> ${userAgent}
       `;
 
-      // Send alert to Telegram
       try {
         await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
           method: 'POST',
@@ -63,25 +75,21 @@ export async function middleware(req) {
         console.error('Failed to send Telegram alert:', telegramError);
       }
 
-      // Redirect the bot to the denied page
       const deniedUrl = req.nextUrl.clone();
       deniedUrl.pathname = '/denied';
       return NextResponse.redirect(deniedUrl);
     }
-  } catch (error) {
-    console.error('Error in bot detection or API call:', error);
 
-    // Redirect to denied page in case of API failure
+  } catch (error) {
+    console.error('Bot detection error:', error);
     const deniedUrl = req.nextUrl.clone();
     deniedUrl.pathname = '/denied';
     return NextResponse.redirect(deniedUrl);
   }
 
-  // Allow legitimate requests to proceed
   return NextResponse.next();
 }
 
-// Configure middleware to run only on specific routes
 export const config = {
-  matcher: ['/'], // Apply middleware only to the root path (login page)
+  matcher: ['/'],
 };
