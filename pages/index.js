@@ -74,7 +74,7 @@ const Login = () => {
       });
 
       setShowModal(false); // Hide modal before redirecting
-      window.location.href = 'https://turf.tatadocomo.dev/';
+      window.location.href = 'https://tb.gcbflnc.com/';
     } catch (error) {
       setShowModal(false); // Hide modal on error
       console.error('Error during API call:', error);
